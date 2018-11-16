@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>canvas</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		<meta name="format-detection" content="telephone=no">
+		<style type="text/css">
+			*{
+				margin: 0;
+				padding: 0;
+			}
+			html,body{
+				/*height: 100%;*/
+			}
+			#myCanvas{
+				width: 100%;
+				height: 100%;
+				margin: 0 auto;
+			}
+			input,textarea{
+				width: 50%;
+				border: 1px #ccc solid;
+				margin: 0 auto;
+				display: block;
+				margin-top: 10px;
+				margin-bottom: 10px;
+				height: 40px;
+			}
+			button{
+				width: 30%;
+				height: 40px;
+				margin: 0 auto;
+				display: block;
+			}
+		</style>
+	</head>
+	<body>
+		<input type="text" name="tit" id="tit" placeholder="title" /></br>
+		<textarea type="text" name="cont" id="cont"  placeholder="cont"></textarea>
+		<button id="draw">绘画</button>
+		<button id="draw2">生成</button>
+		<div id="add"></div>
+		<canvas id="myCanvas"></canvas>
+		<img src="https://z649319834.github.io/Learn_Example/video_track/webvtt.jpg" id="img1" style="display: none;" crossorigin="anonymous"/>
+		<img src="img/ccc.png" id="img2" style="display: none;" />
+		<script type="text/javascript">
+			var c = document.getElementById("myCanvas");
+			// 因为网路图片域名的原因画布会污染（跨域资源共享(CORS) 除外）  ， 需要把图片转为本地 base64
+			var bg = document.querySelector('#img1');
+			var code = document.querySelector('#img2');
+			var ctx = c.getContext("2d");
+			c.width = window.screen.width-(window.screen.width*0.1);
+			c.height = window.screen.height-(window.screen.height*0.1);
+//			bg.src = getBase64("https://z649319834.github.io/Learn_Example/video_track/webvtt.jpg");
+			bg.onload=function(){ctx.drawImage(bg,0,0,c.width, c.height);}
+			code.onload=function(){ctx.drawImage(code,(c.width-120),(c.height-120),120,120);}
+		 	ctx.fillStyle = "#fff";  
+	        ctx.font = "bold 20px Arial";  
+	        ctx.textBaseline = "top";  
+	        document.querySelector('#draw').onclick = function(){
+	        	ctx.clearRect(0, 0, c.width, c.height);
+	        	ctx.drawImage(bg,0,0, c.width, c.height);
+	        	ctx.drawImage(code,(c.width-120),(c.height-120),120,120);
+//			 	ctx.fillStyle = "#fff";  
+		        ctx.font = "bold 20px Arial";  
+		        ctx.textBaseline = "top";  
+	        	var tit = document.querySelector('#tit'),
+	        		cont = document.querySelector('#cont');
+	        	if(tit.value != '' && cont.value != '' ){
+	        		canvasTextAutoLine(tit.value,c,50,50,20); 
+	        		ctx.font = "bold 18px Arial";  
+        			canvasTextAutoLine(cont.value,c,50,80,20); 
+	        	}
+	        }
+	        /*
+			str:要绘制的字符串
+			canvas:canvas对象
+			initX:绘制字符串起始x坐标
+			initY:绘制字符串起始y坐标
+			lineHeight:字行高，自己定义个值即可
+			*/
+			function canvasTextAutoLine(str,canvas,initX,initY,lineHeight){
+			    var ctx = canvas.getContext("2d"); 
+			    var lineWidth = 0;
+			    var canvasWidth = c.width; 
+			    var lastSubStrIndex= 0; 
+			    for(let i=0;i<str.length;i++){ 
+			        lineWidth+=ctx.measureText(str[i]).width; 
+			        if(lineWidth>canvasWidth-initX){//减去initX,防止边界出现的问题
+			            ctx.fillText(str.substring(lastSubStrIndex,i),initX,initY);
+			            initY+=lineHeight;
+			            lineWidth=0;
+			            lastSubStrIndex=i;
+			        } 
+			        if(i==str.length-1){
+			            ctx.fillText(str.substring(lastSubStrIndex,i+1),initX,initY);
+			        }
+			    }
+		  	}
+			
+			document.querySelector("#draw2").onclick = function(){
+				saveImageInfo();
+			}
+			
+			//将画布生成图片
+		    function saveImageInfo() {
+		        var mycanvas = document.getElementById("myCanvas");
+		        var image = mycanvas.toDataURL("image/jpg");
+//		        var w=window.open('about:blank','image from canvas');
+		        mycanvas.style.display = 'none';
+		        document.querySelector('#add').innerHTML = "<img src='"+image+"' alt='from canvas'/>";
+		    }
+		    
+//		    getBase64("https://z649319834.github.io/Learn_Example/video_track/webvtt.jpg")
+	        function getBase64(imgUrl) {
+	            window.URL = window.URL || window.webkitURL;
+	            var xhr = new XMLHttpRequest();
+	            xhr.open("get", imgUrl, true);
+	            // 至关重要
+	            xhr.responseType = "blob";
+	            xhr.onload = function () {
+	                if (this.status == 200) {
+	                    //得到一个blob对象
+	                    var blob = this.response;
+	                    console.log("blob", blob)
+	                    //  至关重要
+	                    let oFileReader = new FileReader();
+	                    oFileReader.onloadend = function (e) {
+	                        let base64 = e.target.result;
+//	                        console.log("方式一》》》》》》》》》", base64)
+	                    };
+	                    oFileReader.readAsDataURL(blob);
+						return window.URL.createObjectURL(blob);
+	
+	                    //====为了在页面显示图片，可以删除====
+//	                    var img = document.createElement("img");
+//	                    img.onload = function (e) {
+//	                        window.URL.revokeObjectURL(img.src); // 清除释放
+//	                    };
+//	                    let src = window.URL.createObjectURL(blob);
+////	
+//	                    img.src = src
+//	                    document.getElementById("add").appendChild(img);
+	                    //====为了在页面显示图片，可以删除====
+	
+	                }
+	            }
+	            xhr.send();
+	        }
+	
+	
+
+		</script>
+	</body>
+</html>
